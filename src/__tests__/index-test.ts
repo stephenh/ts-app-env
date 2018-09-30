@@ -47,9 +47,13 @@ describe("AppConfig", () => {
   });
 
   it("can be constructed with missing env vars if skip is set", () => {
-    const context = new ConfigContext({});
+    const log = jest.spyOn(global.console, "log").mockImplementation(() => {});
+    const invalidEnvVars = { ...validEnvVars };
+    delete invalidEnvVars.NAME;
+    const context = new ConfigContext(invalidEnvVars);
     const conf = newConfig(AppConfig, context, true);
     expect(conf.name).toBeUndefined();
+    expect(log).toHaveBeenCalledWith("Ignoring errors while instantiating config: NAME is not set");
   });
 
   it("error message contains the name of all missing env vars", () => {

@@ -1,4 +1,3 @@
-
 /**
  * Creates a new config object, described by the {@code SpecType} constructor,
  * after populating/validating it against the {@code context} environment.
@@ -14,7 +13,11 @@
  * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
  * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
  */
-export function newConfig<S>(SpecType: new () => S, context: ConfigContext, skipErrors: boolean = false): S {
+export function newConfig<S>(
+  SpecType: new () => S,
+  context: ConfigContext,
+  ignoreErrors: boolean = false
+): S {
   // start with a brand new instance of S
   const instance = {};
   const errors: Error[] = [];
@@ -28,8 +31,16 @@ export function newConfig<S>(SpecType: new () => S, context: ConfigContext, skip
       errors.push(e);
     }
   });
-  if (errors.length > 0 && !skipErrors) {
-    throw new ConfigError(errors.map(e => e.message).join(", "));
+  if (errors.length > 0) {
+    const message = errors.map(e => e.message).join(", ");
+    if (!ignoreErrors) {
+      throw new ConfigError(message);
+    } else {
+      // In theory should use some configurable log library but typically that would
+      // require booting up the very environment/config variables we're trying to resolve.
+      // tslint:disable-next-line no-console
+      console.log(`Ignore errors while instantiating ${SpecType}: ${message}`);
+    }
   }
   return instance as S;
 }
