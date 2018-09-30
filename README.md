@@ -1,20 +1,33 @@
-# ts-spec-config
+
+# ts-config-spec
 
 A config library for TypeScript.
 
-This is a small library for encapsulating access to an application's config (currently just environment variables).
+This is a small library for encapsulating access to an application's config.
+
+Currently just environment variables.
 
 ## Goals
 
 The main goals are:
 
-1. Declare all of an application's config in a single place,
+1. Declare all of an application's config in a single place.
 
    This helps understanding and maintaining an application's config vs. grepping for `process.env.FOO` calls spread throughout the codebase.
 
-2. Perform simple "all of the config values are available" check immediately on application boot.
+2. Perform a simple "all of the config values are available" sanity check immediately on application boot.
 
-   This prevents an application booting and then ~seconds/minutes later blowing up because a `process.env.IMPORTANT_SETTING` is not available.
+   This prevents an application booting and then ~seconds/minutes later blowing up because a `process.env.VERY_IMPORTANT_SETTING` is not available.
+
+## Non-Goals
+
+* Loading config from disk.
+
+  This library currently doesn't try to load YAML, JSON, TOML, etc. files from disk; it's generally assumed you're running in a Node/container environment where environmet variables are the primary means of configuration.
+
+  In theory the `ConfigContext` type decouples `ts-config-spec` from the actual Node/process/etc. environment, so you could provide other implementations.
+
+  You can also use something like `dotenv` to load files from disk into `process.env` and then use `ts-config-spec` from there.
 
 ## Usage
 
@@ -39,6 +52,8 @@ const context = new ConfigContext(process.env);
 export const env = newConfig(AppEnv, context);
 ```
 
+`newConfig` will fail if any non-optional config parameters are not available.
+
 Then in the rest of your application, you can import `env`:
 
 ```
@@ -49,14 +64,14 @@ env.SOME_URL; // already ensured to be set
 
 ## Configuration
 
-The library supports both a convention of "property name == environment name" that is succint:
+The library supports both a convention of "property name == environment name" that allow succint declaration:
 
 ```
 class AppEnv {
   PORT = number();
 ```
 
-But can also be customized:
+As well as customization of each property via an `options` hash:
 
 ```
 class AppEnv {
