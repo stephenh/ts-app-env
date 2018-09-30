@@ -1,8 +1,22 @@
 
-/** Validates the config defined by {@code SpecType} and returns a valid instance. */
+/**
+ * Creates a new config object, described by the {@code SpecType} constructor,
+ * after populating/validating it against the {@code context} environment.
+ *
+ * SpecType should be a class that looks like:
+ *
+ * ```typescript
+ * class MyEnv {
+ *   prop_a = string();
+ * }
+ * ```
+ *
+ * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
+ * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
+ */
 export function newConfig<S>(SpecType: new () => S, context: ConfigContext, skipErrors: boolean = false): S {
   // start with a brand new instance of S
-  const instance = {} as S;
+  const instance = {};
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
@@ -17,29 +31,30 @@ export function newConfig<S>(SpecType: new () => S, context: ConfigContext, skip
   if (errors.length > 0 && !skipErrors) {
     throw new ConfigError(errors.map(e => e.message).join(", "));
   }
-  return instance;
+  return instance as S;
 }
 
-export type EnvVars = { [name: string]: string | undefined };
+export interface EnvVars { [name: string]: string | undefined };
 
 /** Decouples config evaluation from the environment. */
 export class ConfigContext {
-  envVars: EnvVars;
+  public envVars: EnvVars;
 
   constructor(envVars: EnvVars) {
     this.envVars = envVars;
   }
 }
 
+// tslint:disable max-classes-per-file
 export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
-type ConfigOption<T> = {
+interface ConfigOption<T> {
   getValue(propertyName: string, context: ConfigContext): T | undefined;
-};
+}
 
 /** The settings that can be defined for each configuration option. */
-export type ConfigOptionSettings<V> = {
+export interface ConfigOptionSettings<V> {
   /** The environment variable name. */
   env?: string;
 
@@ -47,13 +62,12 @@ export type ConfigOptionSettings<V> = {
   default?: V;
 
   /** If this is optional, in which case the type should be {@code V | undefined}. */
-  optional?: Boolean;
+  optional?: boolean;
 };
 
 /** Construct a config option that is a number. */
-export function number(): number;
 export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
-export function number(options: ConfigOptionSettings<number>): number;
+export function number(options?: ConfigOptionSettings<number>): number;
 export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
   return option<number>(options, s => {
     const v = parseInt(s, 10);
@@ -65,16 +79,15 @@ export function number(options: ConfigOptionSettings<number> = {}): number | und
 }
 
 /** Construct a config option that is a string. */
-export function string(): string;
 export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
-export function string(options: ConfigOptionSettings<string>): string;
+export function string(options?: ConfigOptionSettings<string>): string;
 export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
   return option<string>(options, s => s);
 }
 
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
-  const option: ConfigOption<V> = {
+  const opt: ConfigOption<V> = {
     getValue(propertyName, context) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
@@ -95,7 +108,12 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       throw new ConfigError(`${envName} is not set`);
     }
   };
-  return option as any as V;
+  // This is the cute "lie through our teeth to the type system" hack where
+  // we pretend our ConfigOption<V> objects are Vs so that we can instaniate
+  // the initial "spec" version of the app's config class, which we'll then
+  // use to iterate over the ConfigOption<V>'s and resolve them to V's on
+  // the real config instance.
+  return opt as any as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
