@@ -39,13 +39,15 @@ export function newConfig<S>(
       // In theory should use some configurable log library but typically that would
       // require booting up the very environment/config variables we're trying to resolve.
       // tslint:disable-next-line no-console
-      console.log(`Ignore errors while instantiating ${SpecType}: ${message}`);
+      console.log(`Ignoring errors while instantiating config: ${message}`);
     }
   }
   return instance as S;
 }
 
-export interface EnvVars { [name: string]: string | undefined };
+export interface EnvVars {
+  [name: string]: string | undefined;
+}
 
 /** Decouples config evaluation from the environment. */
 export class ConfigContext {
@@ -74,12 +76,16 @@ export interface ConfigOptionSettings<V> {
 
   /** If this is optional, in which case the type should be {@code V | undefined}. */
   optional?: boolean;
-};
+}
 
 /** Construct a config option that is a number. */
-export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
+export function number(
+  options: ConfigOptionSettings<number> & { optional: true }
+): number | undefined;
 export function number(options?: ConfigOptionSettings<number>): number;
-export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
+export function number(
+  options: ConfigOptionSettings<number> = {}
+): number | undefined {
   return option<number>(options, s => {
     const v = parseInt(s, 10);
     if (isNaN(v)) {
@@ -90,14 +96,21 @@ export function number(options: ConfigOptionSettings<number> = {}): number | und
 }
 
 /** Construct a config option that is a string. */
-export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
+export function string(
+  options: ConfigOptionSettings<string> & { optional: true }
+): string | undefined;
 export function string(options?: ConfigOptionSettings<string>): string;
-export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
+export function string(
+  options: ConfigOptionSettings<string> = {}
+): string | undefined {
   return option<string>(options, s => s);
 }
 
 /** Construct a generic config option. */
-export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
+export function option<V>(
+  options: ConfigOptionSettings<V>,
+  parser: (s: string) => V
+): V {
   const opt: ConfigOption<V> = {
     getValue(propertyName, context) {
       // use propertyName if they didn't specify an env
@@ -124,7 +137,7 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
   // the initial "spec" version of the app's config class, which we'll then
   // use to iterate over the ConfigOption<V>'s and resolve them to V's on
   // the real config instance.
-  return opt as any as V;
+  return (opt as any) as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
