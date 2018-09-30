@@ -1,13 +1,12 @@
 import {
   ConfigContext,
   ConfigError,
-  ConfigInstance,
   newConfig,
   string,
   number
 } from "../";
 
-class AppConfigSpec {
+class AppConfig {
   name = string({ env: "NAME" });
 
   nameWithDefault = string({ env: "NAME_NOT_SET", default: "DEFAULT" });
@@ -25,8 +24,6 @@ class AppConfigSpec {
   SOME_URL = string();
 }
 
-type AppConfig = ConfigInstance<AppConfigSpec>;
-
 /* eslint-disable prefer-destructuring */
 describe("AppConfig", () => {
   // default test value
@@ -39,14 +36,20 @@ describe("AppConfig", () => {
 
   it("can be constructed", () => {
     const context = new ConfigContext(validEnvVars);
-    const c: AppConfig = newConfig(AppConfigSpec, context);
+    const c: AppConfig = newConfig(AppConfig, context);
     const name: string = c.name;
     expect(name).toBe("app");
   });
 
   it("cannot be constructed with missing env vars", () => {
     const context = new ConfigContext({});
-    expect(() => newConfig(AppConfigSpec, context)).toThrow(ConfigError);
+    expect(() => newConfig(AppConfig, context)).toThrow(ConfigError);
+  });
+
+  it("can be constructed with missing env vars if skip is set", () => {
+    const context = new ConfigContext({});
+    const conf = newConfig(AppConfig, context, true);
+    expect(conf.name).toBeUndefined();
   });
 
   it("error message contains the name of all missing env vars", () => {
@@ -55,7 +58,7 @@ describe("AppConfig", () => {
     delete invalidEnvVars.PORT;
     const context = new ConfigContext(invalidEnvVars);
     try {
-      newConfig(AppConfigSpec, context);
+      newConfig(AppConfig, context);
     } catch (e) {
       expect(e.message).toEqual("NAME is not set, PORT is not set");
     }
@@ -63,33 +66,33 @@ describe("AppConfig", () => {
 
   it("uses a default value if its given", () => {
     const context = new ConfigContext(validEnvVars);
-    const nameWithDefault: string = newConfig(AppConfigSpec, context)
+    const nameWithDefault: string = newConfig(AppConfig, context)
       .nameWithDefault;
     expect(nameWithDefault).toBe("DEFAULT");
   });
 
   it("can use the property name as the env variable name", () => {
     const context = new ConfigContext(validEnvVars);
-    const name: string = newConfig(AppConfigSpec, context).nameIsEnvName;
+    const name: string = newConfig(AppConfig, context).nameIsEnvName;
     expect(name).toBe("app2");
   });
 
   it("can use the property name as if already snake cased", () => {
     const context = new ConfigContext(validEnvVars);
-    const url: string = newConfig(AppConfigSpec, context).SOME_URL;
+    const url: string = newConfig(AppConfig, context).SOME_URL;
     expect(url).toBe("url");
   });
 
   it("allows options to be optional", () => {
     const context = new ConfigContext(validEnvVars);
-    const config = newConfig(AppConfigSpec, context);
+    const config = newConfig(AppConfig, context);
     const nameOptional: string | undefined = config.nameOptional;
     expect(nameOptional).toBeUndefined();
   });
 
   it("can parse numbers", () => {
     const context = new ConfigContext(validEnvVars);
-    const port: Number = newConfig(AppConfigSpec, context).port;
+    const port: Number = newConfig(AppConfig, context).port;
     expect(port).toBe(8080);
   });
 
@@ -97,7 +100,7 @@ describe("AppConfig", () => {
     const vars = { ...validEnvVars, PORT: "invalid" };
     const context = new ConfigContext(vars);
     try {
-      newConfig(AppConfigSpec, context);
+      newConfig(AppConfig, context);
       fail();
     } catch (e) {
       expect(e.message).toEqual("PORT is not a number");
@@ -106,14 +109,13 @@ describe("AppConfig", () => {
 
   it("can get number default value", () => {
     const context = new ConfigContext(validEnvVars);
-    const portWithDefault: Number = newConfig(AppConfigSpec, context)
-      .portWithDefault;
+    const portWithDefault: Number = newConfig(AppConfig, context).portWithDefault;
     expect(portWithDefault).toBe(8081);
   });
 
   it("can have optional numbers", () => {
     const context = new ConfigContext(validEnvVars);
-    const config = newConfig(AppConfigSpec, context);
+    const config = newConfig(AppConfig, context);
     const portOptional: Number | undefined = config.portOptional;
     expect(portOptional).toBeUndefined();
   });

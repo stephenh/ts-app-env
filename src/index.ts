@@ -1,37 +1,20 @@
-/**
- * An application's top-level configuration spec.
- *
- * The type param {@code S} is the spec type itself, and just lets us enforce
- * that every property in the spec type is a ConfigOption.
- */
-export type ConfigSpec<T> = { [K in keyof T]: ConfigOption<any> };
 
-/**
- * Given a config spec S, represents the instantiated version.
- *
- * E.g. while the spec will have a {@code name} property that is a {@code ConfigOption},
- * the config instance's name {@code name} property is the resolved {@code string} value.
- */
-export type ConfigInstance<S> = {
-  [K in keyof S]: S[K] extends ConfigOption<infer O> ? O : never
-};
-
-/** Validates the config defined by {@code spec} and returns a valid instance. */
-export function newConfig<S extends ConfigSpec<S>>(
-  SpecType: new () => S,
-  context: ConfigContext
-): ConfigInstance<S> {
-  const instance = {} as ConfigInstance<S>;
+/** Validates the config defined by {@code SpecType} and returns a valid instance. */
+export function newConfig<S>(SpecType: new () => S, context: ConfigContext, skipErrors: boolean = false): S {
+  // start with a brand new instance of S
+  const instance = {} as S;
   const errors: Error[] = [];
-  const spec = new SpecType() as ConfigSpec<any>;
+  // go through our spec version of S that the type system thinks has primitives
+  // but are really ConfigOptions that we've casted to the primitive
+  const spec = new SpecType();
   Object.entries(spec).forEach(([k, v]) => {
     try {
-      (instance as any)[k] = v.getValue(k, context);
+      (instance as any)[k] = (v as ConfigOption<any>).getValue(k, context);
     } catch (e) {
       errors.push(e);
     }
   });
-  if (errors.length > 0) {
+  if (errors.length > 0 && !skipErrors) {
     throw new ConfigError(errors.map(e => e.message).join(", "));
   }
   return instance;
@@ -51,7 +34,7 @@ export class ConfigContext {
 export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
-export type ConfigOption<T> = {
+type ConfigOption<T> = {
   getValue(propertyName: string, context: ConfigContext): T | undefined;
 };
 
@@ -68,16 +51,10 @@ export type ConfigOptionSettings<V> = {
 };
 
 /** Construct a config option that is a number. */
-export function number(): ConfigOption<number>;
-export function number(
-  options: ConfigOptionSettings<number> & { optional: true }
-): ConfigOption<number | undefined>;
-export function number(
-  options: ConfigOptionSettings<number>
-): ConfigOption<number>;
-export function number(
-  options: ConfigOptionSettings<number> = {}
-): ConfigOption<number | undefined> {
+export function number(): number;
+export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
+export function number(options: ConfigOptionSettings<number>): number;
+export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
   return option<number>(options, s => {
     const v = parseInt(s, 10);
     if (isNaN(v)) {
@@ -88,25 +65,16 @@ export function number(
 }
 
 /** Construct a config option that is a string. */
-export function string(): ConfigOption<string>;
-export function string(
-  options: ConfigOptionSettings<string> & { optional: true }
-): ConfigOption<string | undefined>;
-export function string(
-  options: ConfigOptionSettings<string>
-): ConfigOption<string>;
-export function string(
-  options: ConfigOptionSettings<string> = {}
-): ConfigOption<string | undefined> {
+export function string(): string;
+export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
+export function string(options: ConfigOptionSettings<string>): string;
+export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
   return option<string>(options, s => s);
 }
 
 /** Construct a generic config option. */
-export function option<V>(
-  options: ConfigOptionSettings<V>,
-  parser: (s: string) => V
-): ConfigOption<V> {
-  return {
+export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
+  const option: ConfigOption<V> = {
     getValue(propertyName, context) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
@@ -127,6 +95,7 @@ export function option<V>(
       throw new ConfigError(`${envName} is not set`);
     }
   };
+  return option as any as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
