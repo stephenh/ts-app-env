@@ -37,7 +37,7 @@ export function newConfig<S extends ConfigSpec<S>>(
   return instance;
 }
 
-export type EnvVars = { [name: string]: string };
+export type EnvVars = { [name: string]: string | undefined };
 
 /** Decouples config evaluation from the environment. */
 export class ConfigContext {
@@ -68,17 +68,17 @@ export type ConfigOptionSettings<V> = {
 };
 
 /** Construct a config option that is a number. */
-export function number(): ConfigOption<Number>;
+export function number(): ConfigOption<number>;
 export function number(
-  options: ConfigOptionSettings<Number> & { optional: true }
-): ConfigOption<Number | undefined>;
+  options: ConfigOptionSettings<number> & { optional: true }
+): ConfigOption<number | undefined>;
 export function number(
-  options: ConfigOptionSettings<Number>
-): ConfigOption<Number>;
+  options: ConfigOptionSettings<number>
+): ConfigOption<number>;
 export function number(
-  options: ConfigOptionSettings<Number> = {}
-): ConfigOption<Number | undefined> {
-  return option<Number>(options, s => {
+  options: ConfigOptionSettings<number> = {}
+): ConfigOption<number | undefined> {
+  return option<number>(options, s => {
     const v = parseInt(s, 10);
     if (isNaN(v)) {
       throw new Error("is not a number");
@@ -110,10 +110,10 @@ export function option<V>(
     getValue(propertyName, context) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
-      const envStringValue = context.envVars[envName];
-      if (envStringValue) {
+      const envValue = context.envVars[envName];
+      if (envValue) {
         try {
-          return parser(envStringValue);
+          return parser(envValue);
         } catch (e) {
           throw new ConfigError(`${envName} ${e.message}`);
         }
