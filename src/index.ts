@@ -18,16 +18,15 @@ export function newConfig<S>(
   context: ConfigContext,
   ignoreErrors: boolean = false
 ): S {
-  // start with a brand new instance of S
-  const instance = {};
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
   const spec = new SpecType();
   Object.entries(spec).forEach(([k, v]) => {
     try {
-      (instance as any)[k] = (v as ConfigOption<any>).getValue(k, context);
+      (spec as any)[k] = (v as ConfigOption<any>).getValue(k, context);
     } catch (e) {
+      (spec as any)[k] = undefined;
       errors.push(e);
     }
   });
@@ -42,7 +41,7 @@ export function newConfig<S>(
       console.log(`Ignoring errors while instantiating config: ${message}`);
     }
   }
-  return instance as S;
+  return spec;
 }
 
 export interface EnvVars {
