@@ -2,26 +2,26 @@ import {
   ConfigContext,
   ConfigError,
   newConfig,
+  number,
   string,
-  number
 } from "../";
 
 class AppConfig {
-  name = string({ env: "NAME" });
+  public name = string({ env: "NAME" });
 
-  nameWithDefault = string({ env: "NAME_NOT_SET", default: "DEFAULT" });
+  public nameWithDefault = string({ env: "NAME_NOT_SET", default: "DEFAULT" });
 
-  nameOptional = string({ env: "NAME_NOT_SET", optional: true });
+  public nameOptional = string({ env: "NAME_NOT_SET", optional: true });
 
-  port = number({ env: "PORT" });
+  public port = number({ env: "PORT" });
 
-  portWithDefault = number({ env: "PORT_NOT_SET", default: 8081 });
+  public portWithDefault = number({ env: "PORT_NOT_SET", default: 8081 });
 
-  portOptional = number({ env: "PORT_NOT_SET", optional: true });
+  public portOptional = number({ env: "PORT_NOT_SET", optional: true });
 
-  nameIsEnvName = string();
+  public nameIsEnvName = string();
 
-  SOME_URL = string();
+  public SOME_URL = string();
 }
 
 /* eslint-disable prefer-destructuring */
@@ -29,8 +29,8 @@ describe("AppConfig", () => {
   // default test value
   const validEnvVars = {
     NAME: "app",
-    PORT: "8080",
     NAME_IS_ENV_NAME: "app2",
+    PORT: "8080",
     SOME_URL: "url"
   };
 
@@ -47,7 +47,7 @@ describe("AppConfig", () => {
   });
 
   it("can be constructed with missing env vars if skip is set", () => {
-    const log = jest.spyOn(global.console, "log").mockImplementation(() => {});
+    const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
     const invalidEnvVars = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     const context = new ConfigContext(invalidEnvVars);
@@ -96,7 +96,7 @@ describe("AppConfig", () => {
 
   it("can parse numbers", () => {
     const context = new ConfigContext(validEnvVars);
-    const port: Number = newConfig(AppConfig, context).port;
+    const port: number = newConfig(AppConfig, context).port;
     expect(port).toBe(8080);
   });
 
@@ -113,14 +113,14 @@ describe("AppConfig", () => {
 
   it("can get number default value", () => {
     const context = new ConfigContext(validEnvVars);
-    const portWithDefault: Number = newConfig(AppConfig, context).portWithDefault;
+    const portWithDefault: number = newConfig(AppConfig, context).portWithDefault;
     expect(portWithDefault).toBe(8081);
   });
 
   it("can have optional numbers", () => {
     const context = new ConfigContext(validEnvVars);
     const config = newConfig(AppConfig, context);
-    const portOptional: Number | undefined = config.portOptional;
+    const portOptional: number | undefined = config.portOptional;
     expect(portOptional).toBeUndefined();
   });
 });
