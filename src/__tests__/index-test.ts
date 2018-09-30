@@ -1,10 +1,4 @@
-import {
-  ConfigContext,
-  ConfigError,
-  newConfig,
-  number,
-  string,
-} from "../";
+import { ConfigContext, ConfigError, newConfig, number, string } from "../";
 
 class AppConfig {
   public name = string({ env: "NAME" });
@@ -70,8 +64,7 @@ describe("AppConfig", () => {
 
   it("uses a default value if its given", () => {
     const context = new ConfigContext(validEnvVars);
-    const nameWithDefault: string = newConfig(AppConfig, context)
-      .nameWithDefault;
+    const nameWithDefault: string = newConfig(AppConfig, context).nameWithDefault;
     expect(nameWithDefault).toBe("DEFAULT");
   });
 
@@ -122,5 +115,13 @@ describe("AppConfig", () => {
     const config = newConfig(AppConfig, context);
     const portOptional: number | undefined = config.portOptional;
     expect(portOptional).toBeUndefined();
+  });
+
+  it("is frozen", () => {
+    const context = new ConfigContext(validEnvVars);
+    const config = newConfig(AppConfig, context);
+    expect(() => (config.name = "something else")).toThrow(
+      new TypeError("Cannot assign to read only property 'name' of object '#<AppConfig>'")
+    );
   });
 });

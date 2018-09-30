@@ -13,11 +13,7 @@
  * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
  * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
  */
-export function newConfig<S>(
-  SpecType: new () => S,
-  context: ConfigContext,
-  ignoreErrors: boolean = false
-): S {
+export function newConfig<S>(SpecType: new () => S, context: ConfigContext, ignoreErrors: boolean = false): S {
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
@@ -41,7 +37,7 @@ export function newConfig<S>(
       console.log(`Ignoring errors while instantiating config: ${message}`);
     }
   }
-  return spec;
+  return Object.freeze(spec);
 }
 
 export interface EnvVars {
@@ -58,7 +54,8 @@ export class ConfigContext {
 }
 
 // tslint:disable max-classes-per-file
-export class ConfigError extends Error {}
+export class ConfigError extends Error {
+}
 
 /** An individual config option, e.g. a string/int. */
 interface ConfigOption<T> {
@@ -78,13 +75,9 @@ export interface ConfigOptionSettings<V> {
 }
 
 /** Construct a config option that is a number. */
-export function number(
-  options: ConfigOptionSettings<number> & { optional: true }
-): number | undefined;
+export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
 export function number(options?: ConfigOptionSettings<number>): number;
-export function number(
-  options: ConfigOptionSettings<number> = {}
-): number | undefined {
+export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
   return option<number>(options, s => {
     const v = parseInt(s, 10);
     if (isNaN(v)) {
@@ -95,21 +88,14 @@ export function number(
 }
 
 /** Construct a config option that is a string. */
-export function string(
-  options: ConfigOptionSettings<string> & { optional: true }
-): string | undefined;
+export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
 export function string(options?: ConfigOptionSettings<string>): string;
-export function string(
-  options: ConfigOptionSettings<string> = {}
-): string | undefined {
+export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
   return option<string>(options, s => s);
 }
 
 /** Construct a generic config option. */
-export function option<V>(
-  options: ConfigOptionSettings<V>,
-  parser: (s: string) => V
-): V {
+export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
   const opt: ConfigOption<V> = {
     getValue(propertyName, context) {
       // use propertyName if they didn't specify an env
