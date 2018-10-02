@@ -45,7 +45,7 @@ class AppEnv {
 
 And then instantiate it:
 
-```
+```typescript
 import { ConfigContext, newConfig } from 'ts-spec-config';
 
 const context = new ConfigContext(process.env);
@@ -56,7 +56,7 @@ export const env = newConfig(AppEnv, context);
 
 Then in the rest of your application, you can import `env`:
 
-```
+```typescript
 import { env } from 'env.ts';
 
 env.SOME_URL; // already ensured to be set
@@ -66,14 +66,15 @@ env.SOME_URL; // already ensured to be set
 
 The library supports both a convention of "property name == environment name" that allow succint declaration:
 
-```
+```typescript
 class AppEnv {
   PORT = number();
+}
 ```
 
 As well as customization of each property via an `options` hash:
 
-```
+```typescript
 class AppEnv {
   port = number({
     env: 'CUSTOM_ENV_NAME',
