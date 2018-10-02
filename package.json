@@ -2,9 +2,11 @@
   "name": "ts-spec-config",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "Stephen Haberman",

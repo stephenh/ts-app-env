@@ -13,19 +13,29 @@
  * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
  * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
  */
-export function newConfig<S>(SpecType: new () => S, context: ConfigContext, ignoreErrors: boolean = false): S {
+export function newConfig<S>(
+  SpecType: new () => S,
+  context: ConfigContext,
+  ignoreErrors: boolean = false
+): S {
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
   const spec = new SpecType();
-  Object.entries(spec).forEach(([k, v]) => {
+  Object.keys(spec).forEach(k => {
     try {
+      const v = (spec as any)[k];
       (spec as any)[k] = (v as ConfigOption<any>).getValue(k, context);
     } catch (e) {
       (spec as any)[k] = undefined;
       errors.push(e);
     }
   });
+  logOrFailIfErrors(errors, ignoreErrors);
+  return Object.freeze(spec);
+}
+
+function logOrFailIfErrors(errors: Error[], ignoreErrors: boolean) {
   if (errors.length > 0) {
     const message = errors.map(e => e.message).join(", ");
     if (!ignoreErrors) {
@@ -37,7 +47,6 @@ export function newConfig<S>(SpecType: new () => S, context: ConfigContext, igno
       console.log(`Ignoring errors while instantiating config: ${message}`);
     }
   }
-  return Object.freeze(spec);
 }
 
 export interface EnvVars {
@@ -46,6 +55,7 @@ export interface EnvVars {
 
 /** Decouples config evaluation from the environment. */
 export class ConfigContext {
+
   public envVars: EnvVars;
 
   constructor(envVars: EnvVars) {
@@ -54,8 +64,7 @@ export class ConfigContext {
 }
 
 // tslint:disable max-classes-per-file
-export class ConfigError extends Error {
-}
+export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
 interface ConfigOption<T> {
