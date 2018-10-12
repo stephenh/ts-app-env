@@ -1,22 +1,22 @@
 import { ConfigContext, ConfigError, newConfig, number, string } from "../";
 
-class AppConfig {
-  public name = string({ env: "NAME" });
+const AppConfig = {
+  name: string({ env: "NAME" }),
 
-  public nameWithDefault = string({ env: "NAME_NOT_SET", default: "DEFAULT" });
+  nameWithDefault: string({ env: "NAME_NOT_SET", default: "DEFAULT" }),
 
-  public nameOptional = string({ env: "NAME_NOT_SET", optional: true });
+  nameOptional: string({ env: "NAME_NOT_SET", optional: true }),
 
-  public port = number({ env: "PORT" });
+  port: number({ env: "PORT" }),
 
-  public portWithDefault = number({ env: "PORT_NOT_SET", default: 8081 });
+  portWithDefault: number({ env: "PORT_NOT_SET", default: 8081 }),
 
-  public portOptional = number({ env: "PORT_NOT_SET", optional: true });
+  portOptional: number({ env: "PORT_NOT_SET", optional: true }),
 
-  public nameIsEnvName = string();
+  nameIsEnvName: string(),
 
-  public SOME_URL = string();
-}
+  SOME_URL: string()
+};
 
 /* eslint-disable prefer-destructuring */
 describe("AppConfig", () => {
@@ -30,7 +30,7 @@ describe("AppConfig", () => {
 
   it("can be constructed", () => {
     const context = new ConfigContext(validEnvVars);
-    const c: AppConfig = newConfig(AppConfig, context);
+    const c: typeof AppConfig = newConfig(AppConfig, context);
     const name: string = c.name;
     expect(name).toBe("app");
   });
@@ -121,7 +121,7 @@ describe("AppConfig", () => {
     const context = new ConfigContext(validEnvVars);
     const config = newConfig(AppConfig, context);
     expect(() => (config.name = "something else")).toThrow(
-      new TypeError("Cannot assign to read only property 'name' of object '#<AppConfig>'")
+      new TypeError("Cannot assign to read only property 'name' of object '#<Object>'")
     );
   });
 });

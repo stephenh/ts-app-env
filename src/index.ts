@@ -13,26 +13,21 @@
  * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
  * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
  */
-export function newConfig<S>(
-  SpecType: new () => S,
-  context: ConfigContext,
-  ignoreErrors: boolean = false
-): S {
+export function newConfig<S>(spec: S, context: ConfigContext, ignoreErrors: boolean = false): S {
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
-  const spec = new SpecType();
+  const config = {};
   Object.keys(spec).forEach(k => {
     try {
       const v = (spec as any)[k];
-      (spec as any)[k] = (v as ConfigOption<any>).getValue(k, context);
+      (config as any)[k] = (v as ConfigOption<any>).getValue(k, context);
     } catch (e) {
-      (spec as any)[k] = undefined;
       errors.push(e);
     }
   });
   logOrFailIfErrors(errors, ignoreErrors);
-  return Object.freeze(spec);
+  return Object.freeze(config) as S;
 }
 
 function logOrFailIfErrors(errors: Error[], ignoreErrors: boolean) {
@@ -55,7 +50,6 @@ export interface EnvVars {
 
 /** Decouples config evaluation from the environment. */
 export class ConfigContext {
-
   public envVars: EnvVars;
 
   constructor(envVars: EnvVars) {
