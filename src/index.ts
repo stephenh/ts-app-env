@@ -21,7 +21,12 @@ export function newConfig<S>(spec: S, context: ConfigContext, ignoreErrors: bool
   Object.keys(spec).forEach(k => {
     try {
       const v = (spec as any)[k];
-      (config as any)[k] = (v as ConfigOption<any>).getValue(k, context);
+      if (v instanceof ConfigOption) {
+        (config as any)[k] = v.getValue(k, context);
+      } else if (typeof v === "object") {
+        // assume this is a nested config spec
+        (config as any)[k] = newConfig(v, context, ignoreErrors);
+      }
     } catch (e) {
       errors.push(e);
     }
@@ -61,8 +66,8 @@ export class ConfigContext {
 export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
-interface ConfigOption<T> {
-  getValue(propertyName: string, context: ConfigContext): T | undefined;
+abstract class ConfigOption<T> {
+  public abstract getValue(propertyName: string, context: ConfigContext): T | undefined;
 }
 
 /** The settings that can be defined for each configuration option. */
@@ -99,8 +104,8 @@ export function string(options: ConfigOptionSettings<string> = {}): string | und
 
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
-  const opt: ConfigOption<V> = {
-    getValue(propertyName, context) {
+  const opt = new class extends ConfigOption<V> {
+    public getValue(propertyName: string, context: ConfigContext) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
       const envValue = context.envVars[envName];
@@ -119,7 +124,7 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       }
       throw new ConfigError(`${envName} is not set`);
     }
-  };
+  }();
   // This is the cute "lie through our teeth to the type system" hack where
   // we pretend our ConfigOption<V> objects are Vs so that we can instaniate
   // the initial "spec" version of the app's config class, which we'll then
