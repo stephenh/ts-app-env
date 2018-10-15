@@ -1,4 +1,4 @@
-import { ConfigContext, newConfig, number, string } from "../";
+import { newConfig, number, string } from "../";
 
 // Each component has its own/different config
 const RollbarEnv = {
@@ -39,22 +39,19 @@ describe("AppEnv", () => {
   };
 
   it("can be constructed", () => {
-    const context = new ConfigContext(validEnvVars);
-    const c = newConfig(AppEnv, context);
+    const c = newConfig(AppEnv, validEnvVars);
     expect(c.ROLLBAR_URL).toBe("http://rollbar");
     expect(c.STATSD_URL).toBe("http://statsd");
     expect(c.APP_URL).toBe("http://app");
   });
 
   it("can compose settings", () => {
-    const context = new ConfigContext(validEnvVars);
-    const c = newConfig(AppEnv, context);
+    const c = newConfig(AppEnv, validEnvVars);
     expect(createThirdPartyMod(c.someThirdParty)).toBe("thirdPartyUrl:100");
   });
 
   it("can compose settings", () => {
-    const context = new ConfigContext(validEnvVars);
-    const c = newConfig(AppEnv, context);
+    const c = newConfig(AppEnv, validEnvVars);
     expect(createThirdPartyMod(c.someThirdParty)).toBe("thirdPartyUrl:100");
   });
 
@@ -63,7 +60,8 @@ describe("AppEnv", () => {
     delete invalidEnv.APP_URL;
     delete invalidEnv.SOME_URL;
     delete invalidEnv.SOME_PORT;
-    const context = new ConfigContext(invalidEnv);
-    expect(() => newConfig(AppEnv, context)).toThrow("APP_URL is not set, SOME_PORT is not set, SOME_URL is not set");
+    expect(() => newConfig(AppEnv, invalidEnv)).toThrow(
+      "APP_URL is not set, SOME_PORT is not set, SOME_URL is not set"
+    );
   });
 });

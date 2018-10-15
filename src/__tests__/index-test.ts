@@ -1,4 +1,4 @@
-import { ConfigContext, ConfigError, newConfig, number, string } from "../";
+import { ConfigError, newConfig, number, string } from "../";
 
 const AppConfig = {
   name: string({ env: "NAME" }),
@@ -19,7 +19,7 @@ const AppConfig = {
 };
 
 /* eslint-disable prefer-destructuring */
-describe("AppConfig", () => {
+describe("AppEnv", () => {
   // default test value
   const validEnvVars = {
     NAME: "app",
@@ -29,23 +29,20 @@ describe("AppConfig", () => {
   };
 
   it("can be constructed", () => {
-    const context = new ConfigContext(validEnvVars);
-    const c: typeof AppConfig = newConfig(AppConfig, context);
+    const c: typeof AppConfig = newConfig(AppConfig, validEnvVars);
     const name: string = c.name;
     expect(name).toBe("app");
   });
 
   it("cannot be constructed with missing env vars", () => {
-    const context = new ConfigContext({});
-    expect(() => newConfig(AppConfig, context)).toThrow(ConfigError);
+    expect(() => newConfig(AppConfig, {})).toThrow(ConfigError);
   });
 
   it("can be constructed with missing env vars if skip is set", () => {
     const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
     const invalidEnvVars = { ...validEnvVars };
     delete invalidEnvVars.NAME;
-    const context = new ConfigContext(invalidEnvVars);
-    const conf = newConfig(AppConfig, context, true);
+    const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true });
     expect(conf.name).toBeUndefined();
     expect(log).toHaveBeenCalledWith("Ignoring errors while instantiating config: NAME is not set");
   });
@@ -54,63 +51,53 @@ describe("AppConfig", () => {
     const invalidEnvVars = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     delete invalidEnvVars.PORT;
-    const context = new ConfigContext(invalidEnvVars);
-    expect(() => newConfig(AppConfig, context)).toThrow("NAME is not set, PORT is not set");
+    expect(() => newConfig(AppConfig, invalidEnvVars)).toThrow("NAME is not set, PORT is not set");
   });
 
   it("uses a default value if its given", () => {
-    const context = new ConfigContext(validEnvVars);
-    const nameWithDefault: string = newConfig(AppConfig, context).nameWithDefault;
+    const nameWithDefault: string = newConfig(AppConfig, validEnvVars).nameWithDefault;
     expect(nameWithDefault).toBe("DEFAULT");
   });
 
   it("can use the property name as the env variable name", () => {
-    const context = new ConfigContext(validEnvVars);
-    const name: string = newConfig(AppConfig, context).nameIsEnvName;
+    const name: string = newConfig(AppConfig, validEnvVars).nameIsEnvName;
     expect(name).toBe("app2");
   });
 
   it("can use the property name as if already snake cased", () => {
-    const context = new ConfigContext(validEnvVars);
-    const url: string = newConfig(AppConfig, context).SOME_URL;
+    const url: string = newConfig(AppConfig, validEnvVars).SOME_URL;
     expect(url).toBe("url");
   });
 
   it("allows options to be optional", () => {
-    const context = new ConfigContext(validEnvVars);
-    const config = newConfig(AppConfig, context);
+    const config = newConfig(AppConfig, validEnvVars);
     const nameOptional: string | undefined = config.nameOptional;
     expect(nameOptional).toBeUndefined();
   });
 
   it("can parse numbers", () => {
-    const context = new ConfigContext(validEnvVars);
-    const port: number = newConfig(AppConfig, context).port;
+    const port: number = newConfig(AppConfig, validEnvVars).port;
     expect(port).toBe(8080);
   });
 
   it("can handle invalid numbers", () => {
     const vars = { ...validEnvVars, PORT: "invalid" };
-    const context = new ConfigContext(vars);
-    expect(() => newConfig(AppConfig, context)).toThrow("PORT is not a number");
+    expect(() => newConfig(AppConfig, vars)).toThrow("PORT is not a number");
   });
 
   it("can get number default value", () => {
-    const context = new ConfigContext(validEnvVars);
-    const portWithDefault: number = newConfig(AppConfig, context).portWithDefault;
+    const portWithDefault: number = newConfig(AppConfig, validEnvVars).portWithDefault;
     expect(portWithDefault).toBe(8081);
   });
 
   it("can have optional numbers", () => {
-    const context = new ConfigContext(validEnvVars);
-    const config = newConfig(AppConfig, context);
+    const config = newConfig(AppConfig, validEnvVars);
     const portOptional: number | undefined = config.portOptional;
     expect(portOptional).toBeUndefined();
   });
 
   it("is frozen", () => {
-    const context = new ConfigContext(validEnvVars);
-    const config = newConfig(AppConfig, context);
+    const config = newConfig(AppConfig, validEnvVars);
     expect(() => (config.name = "something else")).toThrow(
       new TypeError("Cannot assign to read only property 'name' of object '#<Object>'")
     );

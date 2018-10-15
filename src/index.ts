@@ -1,19 +1,24 @@
 /**
- * Creates a new config object, described by the {@code SpecType} constructor,
- * after populating/validating it against the {@code context} environment.
+ * Creates a new config object, described by the {@code ConfigSpec} instance,
+ * after populating/validating it against the {@code env} environment.
  *
- * SpecType should be a class that looks like:
+ * The {@code ConfigSpec} should be an object literal that looks like:
  *
  * ```typescript
- * class MyEnv {
- *   prop_a = string();
+ * const AppEnv = {
+ *   prop_a: string(),
  * }
  * ```
  *
- * And calling `newConfig(MyEnv, context)` will return a `MyEnv` type
- * with `prop_a` resolved to the `PROP_A` (or as appropriate) env value.
+ * And calling `newConfig(AppEnv, env)` will return a new object literal
+ * that has the same type as `MyEnv`, but with `prop_a` resolved to the
+ * `PROP_A` (or as appropriate) env value.
  */
-export function newConfig<S>(spec: S, context: ConfigContext, ignoreErrors: boolean = false): S {
+export interface ConfigOptions {
+  ignoreErrors?: boolean;
+}
+
+export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions = {}): S {
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
@@ -22,16 +27,16 @@ export function newConfig<S>(spec: S, context: ConfigContext, ignoreErrors: bool
     try {
       const v = (spec as any)[k];
       if (v instanceof ConfigOption) {
-        (config as any)[k] = v.getValue(k, context);
+        (config as any)[k] = v.getValue(k, env);
       } else if (typeof v === "object") {
         // assume this is a nested config spec
-        (config as any)[k] = newConfig(v, context, ignoreErrors);
+        (config as any)[k] = newConfig(v, env, options);
       }
     } catch (e) {
       errors.push(e);
     }
   });
-  logOrFailIfErrors(errors, ignoreErrors);
+  logOrFailIfErrors(errors, options.ignoreErrors || false);
   return Object.freeze(config) as S;
 }
 
@@ -49,17 +54,14 @@ function logOrFailIfErrors(errors: Error[], ignoreErrors: boolean) {
   }
 }
 
-export interface EnvVars {
+/**
+ * The environment to pull setting names out of.
+ *
+ * This doesn't have to be Node's `process.env`, but that is the general
+ * assumption and primary use case.
+ */
+export interface Environment {
   [name: string]: string | undefined;
-}
-
-/** Decouples config evaluation from the environment. */
-export class ConfigContext {
-  public envVars: EnvVars;
-
-  constructor(envVars: EnvVars) {
-    this.envVars = envVars;
-  }
 }
 
 // tslint:disable max-classes-per-file
@@ -67,7 +69,7 @@ export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
 abstract class ConfigOption<T> {
-  public abstract getValue(propertyName: string, context: ConfigContext): T | undefined;
+  public abstract getValue(propertyName: string, env: Environment): T | undefined;
 }
 
 /** The settings that can be defined for each configuration option. */
@@ -105,10 +107,10 @@ export function string(options: ConfigOptionSettings<string> = {}): string | und
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
   const opt = new class extends ConfigOption<V> {
-    public getValue(propertyName: string, context: ConfigContext) {
+    public getValue(propertyName: string, env: Environment) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
-      const envValue = context.envVars[envName];
+      const envValue = env[envName];
       if (envValue) {
         try {
           return parser(envValue);
