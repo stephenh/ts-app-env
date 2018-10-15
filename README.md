@@ -1,5 +1,5 @@
 
-# ts-config-spec
+# ts-app-env
 
 A config library for TypeScript.
 
@@ -25,31 +25,30 @@ The main goals are:
 
   This library currently doesn't try to load YAML, JSON, TOML, etc. files from disk; it's generally assumed you're running in a Node/container environment where environmet variables are the primary means of configuration.
 
-  In theory the `ConfigContext` type decouples `ts-config-spec` from the actual Node/process/etc. environment, so you could provide other implementations.
+  In theory the `Environment` type decouples `ts-app-env` from the actual Node/process/etc. environment, so you could provide other implementations.
 
-  You can also use something like `dotenv` to load files from disk into `process.env` and then use `ts-config-spec` from there.
+  You can also use something like `dotenv` to load files from disk into `process.env` and then use `ts-app-env` from there.
 
 ## Usage
 
 First declare your config in a class via the `string`, `number`, etc. options:
 
 ```typescript
-import { string, number } from 'ts-spec-config';
+import { string, number } from 'ts-app-env';
 
-class AppEnv {
-  PORT = number();
+const AppEnv = {
+  PORT: number(),
 
-  SOME_URL = string();
-}
+  SOME_URL: string(),
+};
 ```
 
 And then instantiate it:
 
 ```typescript
-import { ConfigContext, newConfig } from 'ts-spec-config';
+import { newConfig } from 'ts-app-env';
 
-const context = new ConfigContext(process.env);
-export const env = newConfig(AppEnv, context);
+export const env = newConfig(AppEnv, process.env);
 ```
 
 `newConfig` will fail if any non-optional config parameters are not available.
@@ -67,20 +66,20 @@ env.SOME_URL; // already ensured to be set
 The library supports both a convention of "property name == environment name" that allow succint declaration:
 
 ```typescript
-class AppEnv {
-  PORT = number();
+const AppEnv = {
+  PORT: number(),
 }
 ```
 
 As well as customization of each property via an `options` hash:
 
 ```typescript
-class AppEnv {
-  port = number({
+const AppEnv = {
+  port: number({
     env: 'CUSTOM_ENV_NAME',
     default: 8080,
     optional: true,
-  });
+  }),
 }
 ```
 
