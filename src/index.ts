@@ -89,7 +89,7 @@ export function number(options: ConfigOptionSettings<number> & { optional: true 
 export function number(options?: ConfigOptionSettings<number>): number;
 export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
   return option<number>(options, s => {
-    const v = parseInt(s, 10);
+    const v = parseFloat(s);
     if (isNaN(v)) {
       throw new Error("is not a number");
     }
@@ -102,6 +102,13 @@ export function string(options: ConfigOptionSettings<string> & { optional: true 
 export function string(options?: ConfigOptionSettings<string>): string;
 export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
   return option<string>(options, s => s);
+}
+
+/** Construct a config option that is a boolean, only the exact string value 'true' is treated as true, everything else is false. */
+export function boolean(options: ConfigOptionSettings<boolean> & { optional: true }): boolean | undefined;
+export function boolean(options?: ConfigOptionSettings<boolean>): boolean;
+export function boolean(options: ConfigOptionSettings<boolean> = {}): boolean | undefined {
+  return option<boolean>(options, s => s === "true");
 }
 
 /** Construct a generic config option. */

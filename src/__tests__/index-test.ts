@@ -1,6 +1,8 @@
-import { ConfigError, newConfig, number, string } from "../";
+import { boolean, ConfigError, newConfig, number, string } from "../";
 
 const AppConfig = {
+  enabled: boolean(),
+
   name: string({ env: "NAME" }),
 
   nameWithDefault: string({ env: "NAME_NOT_SET", default: "DEFAULT" }),
@@ -22,6 +24,7 @@ const AppConfig = {
 describe("AppEnv", () => {
   // default test value
   const validEnvVars = {
+    ENABLED: "true",
     NAME: "app",
     NAME_IS_ENV_NAME: "app2",
     PORT: "8080",
@@ -94,6 +97,18 @@ describe("AppEnv", () => {
     const config = newConfig(AppConfig, validEnvVars);
     const portOptional: number | undefined = config.portOptional;
     expect(portOptional).toBeUndefined();
+  });
+
+  it("can have booleans", () => {
+    const config = newConfig(AppConfig, validEnvVars);
+    const enabled: boolean = config.enabled;
+    expect(enabled).toBe(true);
+  });
+
+  it("numbers are allowed to be floats", () => {
+    validEnvVars.PORT = "100.5";
+    const config = newConfig(AppConfig, validEnvVars);
+    expect(config.port).toBe(100.5);
   });
 
   it("is frozen", () => {
