@@ -1,5 +1,5 @@
 {
-  "name": "ts-spec-config",
+  "name": "ts-app-env",
   "version": "1.0.1",
   "description": "",
   "main": "build/index.js",
