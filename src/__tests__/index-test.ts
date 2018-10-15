@@ -55,11 +55,7 @@ describe("AppConfig", () => {
     delete invalidEnvVars.NAME;
     delete invalidEnvVars.PORT;
     const context = new ConfigContext(invalidEnvVars);
-    try {
-      newConfig(AppConfig, context);
-    } catch (e) {
-      expect(e.message).toEqual("NAME is not set, PORT is not set");
-    }
+    expect(() => newConfig(AppConfig, context)).toThrow("NAME is not set, PORT is not set");
   });
 
   it("uses a default value if its given", () => {
@@ -96,12 +92,7 @@ describe("AppConfig", () => {
   it("can handle invalid numbers", () => {
     const vars = { ...validEnvVars, PORT: "invalid" };
     const context = new ConfigContext(vars);
-    try {
-      newConfig(AppConfig, context);
-      fail();
-    } catch (e) {
-      expect(e.message).toEqual("PORT is not a number");
-    }
+    expect(() => newConfig(AppConfig, context)).toThrow("PORT is not a number");
   });
 
   it("can get number default value", () => {

@@ -51,4 +51,19 @@ describe("AppEnv", () => {
     const c = newConfig(AppEnv, context);
     expect(createThirdPartyMod(c.someThirdParty)).toBe("thirdPartyUrl:100");
   });
+
+  it("can compose settings", () => {
+    const context = new ConfigContext(validEnvVars);
+    const c = newConfig(AppEnv, context);
+    expect(createThirdPartyMod(c.someThirdParty)).toBe("thirdPartyUrl:100");
+  });
+
+  it("throws a single error for composed configs", () => {
+    const invalidEnv = { ...validEnvVars };
+    delete invalidEnv.APP_URL;
+    delete invalidEnv.SOME_URL;
+    delete invalidEnv.SOME_PORT;
+    const context = new ConfigContext(invalidEnv);
+    expect(() => newConfig(AppEnv, context)).toThrow("APP_URL is not set, SOME_PORT is not set, SOME_URL is not set");
+  });
 });
