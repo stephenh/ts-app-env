@@ -3,6 +3,8 @@ import { boolean, ConfigError, newConfig, number, string } from "../";
 const AppConfig = {
   enabled: boolean(),
 
+  flag: boolean({ default: false }),
+
   name: string({ env: "NAME" }),
 
   nameWithDefault: string({ env: "NAME_NOT_SET", default: "DEFAULT" }),
@@ -103,6 +105,11 @@ describe("AppEnv", () => {
     const config = newConfig(AppConfig, validEnvVars);
     const enabled: boolean = config.enabled;
     expect(enabled).toBe(true);
+  });
+
+  it("can have booleans that default to false", () => {
+    const config = newConfig(AppConfig, validEnvVars);
+    expect(config.flag).toBe(false);
   });
 
   it("numbers are allowed to be floats", () => {

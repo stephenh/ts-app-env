@@ -118,14 +118,14 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
       const envValue = env[envName];
-      if (envValue) {
+      if (envValue !== undefined) {
         try {
           return parser(envValue);
         } catch (e) {
           throw new ConfigError(`${envName} ${e.message}`);
         }
       }
-      if (options.default) {
+      if (options.default !== undefined) {
         return options.default;
       }
       if (options.optional) {
