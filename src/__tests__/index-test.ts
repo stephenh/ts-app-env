@@ -5,7 +5,7 @@ const AppConfig = {
 
   flag: boolean({ default: false }),
 
-  name: string({ env: "NAME" }),
+  name: string({ env: "NAME", notNeededIn: "development" }),
 
   nameWithDefault: string({ env: "NAME_NOT_SET", default: "DEFAULT" }),
 
@@ -57,6 +57,13 @@ describe("AppEnv", () => {
     delete invalidEnvVars.NAME;
     delete invalidEnvVars.PORT;
     expect(() => newConfig(AppConfig, invalidEnvVars)).toThrow("NAME is not set, PORT is not set");
+  });
+
+  it("can ignore unset values in development environments", () => {
+    const devEnvVars = { ...validEnvVars };
+    delete devEnvVars.NAME;
+    const conf = newConfig(AppConfig, devEnvVars, { nodeEnv: "development" });
+    expect(conf.name).toBeUndefined();
   });
 
   it("uses a default value if its given", () => {

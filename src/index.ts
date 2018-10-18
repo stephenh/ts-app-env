@@ -16,6 +16,9 @@
  */
 export interface ConfigOptions {
   ignoreErrors?: boolean;
+
+  /** The NODE_ENV e.g. production or development; used for properties that use `notNeededIn`. */
+  nodeEnv?: string;
 }
 
 export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions = {}): S {
@@ -27,7 +30,7 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
     try {
       const v = (spec as any)[k];
       if (v instanceof ConfigOption) {
-        (config as any)[k] = v.getValue(k, env);
+        (config as any)[k] = v.getValue(k, env, options);
       } else if (typeof v === "object") {
         // assume this is a nested config spec
         (config as any)[k] = newConfig(v, env, options);
@@ -69,7 +72,7 @@ export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
 abstract class ConfigOption<T> {
-  public abstract getValue(propertyName: string, env: Environment): T | undefined;
+  public abstract getValue(propertyName: string, env: Environment, appOptions: ConfigOptions): T | undefined;
 }
 
 /** The settings that can be defined for each configuration option. */
@@ -82,6 +85,9 @@ export interface ConfigOptionSettings<V> {
 
   /** If this is optional, in which case the type should be {@code V | undefined}. */
   optional?: boolean;
+
+  /** A list of NODE_ENVs where this setting is not needed in. */
+  notNeededIn?: string | string[];
 }
 
 /** Construct a config option that is a number. */
@@ -114,7 +120,7 @@ export function boolean(options: ConfigOptionSettings<boolean> = {}): boolean | 
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
   const opt = new class extends ConfigOption<V> {
-    public getValue(propertyName: string, env: Environment) {
+    public getValue(propertyName: string, env: Environment, appOptions: ConfigOptions) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
       const envValue = env[envName];
@@ -130,6 +136,11 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       }
       if (options.optional) {
         return undefined;
+      }
+      if (options.notNeededIn !== undefined && appOptions !== undefined && appOptions.nodeEnv !== undefined) {
+        if (toList(options.notNeededIn).indexOf(appOptions.nodeEnv) > -1) {
+          return undefined;
+        }
       }
       throw new ConfigError(`${envName} is not set`);
     }
@@ -148,4 +159,8 @@ function snakeAndUpIfNeeded(propertyName: string): string {
   } else {
     return propertyName.replace(/([A-Z])/g, l => "_" + l).toUpperCase();
   }
+}
+
+function toList(data: string | string[]): string[] {
+  return typeof data === "string" ? [data] : data;
 }
