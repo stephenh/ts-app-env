@@ -17,6 +17,8 @@
 export interface ConfigOptions {
   ignoreErrors?: boolean;
 
+  doNotLogErrors?: boolean;
+
   /** The NODE_ENV e.g. production or development; used for properties that use `notNeededIn`. */
   nodeEnv?: string;
 }
@@ -39,20 +41,22 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
       errors.push(e);
     }
   });
-  logOrFailIfErrors(errors, options.ignoreErrors || false);
+  logOrFailIfErrors(options, errors, options.ignoreErrors || false);
   return Object.freeze(config) as S;
 }
 
-function logOrFailIfErrors(errors: Error[], ignoreErrors: boolean) {
+function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors: boolean) {
   if (errors.length > 0) {
     const message = errors.map(e => e.message).join(", ");
     if (!ignoreErrors) {
       throw new ConfigError(message);
     } else {
-      // In theory should use some configurable log library but typically that would
-      // require booting up the very environment/config variables we're trying to resolve.
-      // tslint:disable-next-line no-console
-      console.log(`Ignoring errors while instantiating config: ${message}`);
+      if (options.doNotLogErrors !== true) {
+        // In theory should use some configurable log library but typically that would
+        // require booting up the very environment/config variables we're trying to resolve.
+        // tslint:disable-next-line no-console
+        console.log(`Ignoring errors while instantiating config: ${message}`);
+      }
     }
   }
 }
