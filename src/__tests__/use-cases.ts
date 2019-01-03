@@ -23,6 +23,7 @@ const SomeThirdPartyEnv = {
 
 const AppEnv = {
   APP_URL: string(),
+  ENVIRONMENT: string({ default: "staging" }),
   ...RollbarEnv,
   ...StatsEnv,
   someThirdParty: SomeThirdPartyEnv
@@ -32,6 +33,7 @@ const AppEnv = {
 describe("AppEnv", () => {
   const validEnvVars = {
     APP_URL: "http://app",
+    ENVIRONMENT: "production",
     ROLLBAR_URL: "http://rollbar",
     SOME_PORT: "100",
     SOME_URL: "thirdPartyUrl",
@@ -43,6 +45,7 @@ describe("AppEnv", () => {
     expect(c.ROLLBAR_URL).toBe("http://rollbar");
     expect(c.STATSD_URL).toBe("http://statsd");
     expect(c.APP_URL).toBe("http://app");
+    expect(c.ENVIRONMENT).toBe("production");
   });
 
   it("can compose settings", () => {

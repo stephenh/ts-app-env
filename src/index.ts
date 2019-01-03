@@ -158,7 +158,7 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
-  if (propertyName.includes("_")) {
+  if (propertyName.includes("_") || propertyName.match(/^[A-Z]+$/)) {
     return propertyName; // assume it's already FOO_BAR
   } else {
     return propertyName.replace(/([A-Z])/g, l => "_" + l).toUpperCase();
