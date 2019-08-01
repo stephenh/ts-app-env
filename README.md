@@ -23,7 +23,7 @@ The main goals are:
 
 * Loading config from disk.
 
-  This library currently doesn't try to load YAML, JSON, TOML, etc. files from disk; it's generally assumed you're running in a Node/container environment where environmet variables are the primary means of configuration.
+  This library currently doesn't try to load YAML, JSON, TOML, etc. files from disk; it's generally assumed you're running in a Node/container environment where environment variables are the primary means of configuration.
 
   In theory the `Environment` type decouples `ts-app-env` from the actual Node/process/etc. environment, so you could provide other implementations.
 
@@ -63,7 +63,7 @@ env.SOME_URL; // already ensured to be set
 
 ## Configuration
 
-The library supports both a convention of "property name == environment name" that allow succint declaration:
+The library supports both a convention of "property name == environment name" that allow succinct declaration:
 
 ```typescript
 const AppEnv = {
