@@ -28,7 +28,7 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
   const config = {};
-  Object.keys(spec).forEach(k => {
+  Object.keys(spec).forEach((k) => {
     try {
       const v = (spec as any)[k];
       if (v instanceof ConfigOption) {
@@ -47,7 +47,7 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
 
 function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors: boolean) {
   if (errors.length > 0) {
-    const message = errors.map(e => e.message).join(", ");
+    const message = errors.map((e) => e.message).join(", ");
     if (!ignoreErrors) {
       throw new ConfigError(message);
     } else {
@@ -96,7 +96,7 @@ export interface ConfigOptionSettings<V> {
 export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
 export function number(options?: ConfigOptionSettings<number>): number;
 export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
-  return option<number>(options, s => {
+  return option<number>(options, (s) => {
     const v = parseFloat(s);
     if (isNaN(v)) {
       throw new Error("is not a number");
@@ -109,19 +109,19 @@ export function number(options: ConfigOptionSettings<number> = {}): number | und
 export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
 export function string(options?: ConfigOptionSettings<string>): string;
 export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
-  return option<string>(options, s => s);
+  return option<string>(options, (s) => s);
 }
 
 /** Construct a config option that is a boolean, only the exact string value 'true' is treated as true, everything else is false. */
 export function boolean(options: ConfigOptionSettings<boolean> & { optional: true }): boolean | undefined;
 export function boolean(options?: ConfigOptionSettings<boolean>): boolean;
 export function boolean(options: ConfigOptionSettings<boolean> = {}): boolean | undefined {
-  return option<boolean>(options, s => s === "true");
+  return option<boolean>(options, (s) => s === "true");
 }
 
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
-  const opt = new class extends ConfigOption<V> {
+  const opt = new (class extends ConfigOption<V> {
     public getValue(propertyName: string, env: Environment, appOptions: ConfigOptions) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
@@ -146,20 +146,20 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       }
       throw new ConfigError(`${envName} is not set`);
     }
-  }();
+  })();
   // This is the cute "lie through our teeth to the type system" hack where
   // we pretend our ConfigOption<V> objects are Vs so that we can instaniate
   // the initial "spec" version of the app's config class, which we'll then
   // use to iterate over the ConfigOption<V>'s and resolve them to V's on
   // the real config instance.
-  return (opt as any) as V;
+  return opt as any as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
   if (propertyName.includes("_") || propertyName.match(/^[A-Z]+$/)) {
     return propertyName; // assume it's already FOO_BAR
   } else {
-    return propertyName.replace(/([A-Z])/g, l => "_" + l).toUpperCase();
+    return propertyName.replace(/([A-Z])/g, (l) => "_" + l).toUpperCase();
   }
 }
 

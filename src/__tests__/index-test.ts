@@ -19,7 +19,7 @@ const AppConfig = {
 
   nameIsEnvName: string(),
 
-  SOME_URL: string()
+  SOME_URL: string(),
 };
 
 /* eslint-disable prefer-destructuring */
@@ -30,7 +30,7 @@ describe("AppEnv", () => {
     NAME: "app",
     NAME_IS_ENV_NAME: "app2",
     PORT: "8080",
-    SOME_URL: "url"
+    SOME_URL: "url",
   };
 
   it("can be constructed", () => {
