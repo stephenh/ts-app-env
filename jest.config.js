@@ -1,22 +1,16 @@
-
 module.exports = {
   clearMocks: true,
   globals: {
     "ts-jest": {
-      "tsConfig": "tsconfig.json"
-    }
+      tsconfig: "tsconfig.json",
+    },
   },
-  moduleFileExtensions: [
-    "ts",
-    "tsx",
-    "js"
-  ],
+  moduleFileExtensions: ["js", "ts", "tsx"],
   testEnvironment: "node",
-  testMatch: [
-    "<rootDir>/src/**/__tests__/*.+(ts|tsx|js)"
-  ],
+  testMatch: ["<rootDir>/src/**/__tests__/*.+(ts|tsx|js)"],
   transform: {
-    "^.+\\.(ts|tsx)$": "ts-jest"
+    "^.+\\.(ts|tsx)$": "ts-jest",
   },
   watchman: true,
+  preset: "ts-jest",
 };
