@@ -4,13 +4,30 @@
   "description": "",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "keywords": [
+    "config",
+    "typescript",
+    "node-config",
+    "environment-variables",
+    "env",
+    "environment",
+    "settings"
+  ],
+  "author": "Stephen Haberman",
+  "license": "MIT",
+  "homepage": "https://github.com/stephenh/ts-app-env/#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stephenh/ts-app-env.git"
+  },
+  "bugs": "https://github.com/stephenh/ts-app-env/issues",
   "scripts": {
     "test": "jest",
     "build": "tsc"
   },
-  "keywords": [],
-  "author": "Stephen Haberman",
-  "license": "MIT",
+  "engines": {
+    "node": ">=12"
+  },
   "devDependencies": {
     "@types/jest": "^23.3.2",
     "@types/node": "^10.7.0",
