@@ -27,18 +27,22 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
-  const config = {};
+  const config: Record<string, S | unknown> = {};
   Object.keys(spec).forEach((k) => {
     try {
-      const v = (spec as any)[k];
+      const v = (spec as Record<string, unknown>)[k];
       if (v instanceof ConfigOption) {
-        (config as any)[k] = v.getValue(k, env, options);
-      } else if (typeof v === "object") {
+        config[k] = v.getValue(k, env, options);
+      } else if (typeof v === "object" && v !== null) {
         // assume this is a nested config spec
-        (config as any)[k] = newConfig(v, env, options);
+        config[k] = newConfig(v as Record<string, unknown>, env, options);
       }
     } catch (e) {
-      errors.push(e);
+      if (e instanceof Error) {
+        errors.push(e);
+      } else {
+        throw e;
+      }
     }
   });
   logOrFailIfErrors(options, errors, options.ignoreErrors || false);
@@ -130,7 +134,11 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
         try {
           return parser(envValue);
         } catch (e) {
-          throw new ConfigError(`${envName} ${e.message}`);
+          if (e instanceof Error) {
+            throw new ConfigError(`${envName} ${e.message}`);
+          } else {
+            throw e;
+          }
         }
       }
       if (options.default !== undefined) {
@@ -152,7 +160,8 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
   // the initial "spec" version of the app's config class, which we'll then
   // use to iterate over the ConfigOption<V>'s and resolve them to V's on
   // the real config instance.
-  return opt as any as V;
+
+  return opt as unknown as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {

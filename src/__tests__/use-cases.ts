@@ -59,7 +59,7 @@ describe("AppEnv", () => {
   });
 
   it("throws a single error for composed configs", () => {
-    const invalidEnv = { ...validEnvVars };
+    const invalidEnv: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnv.APP_URL;
     delete invalidEnv.SOME_URL;
     delete invalidEnv.SOME_PORT;
