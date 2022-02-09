@@ -54,7 +54,6 @@ function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors
       if (options.doNotLogErrors !== true) {
         // In theory should use some configurable log library but typically that would
         // require booting up the very environment/config variables we're trying to resolve.
-        // tslint:disable-next-line no-console
         console.log(`Ignoring errors while instantiating config: ${message}`);
       }
     }
@@ -71,7 +70,6 @@ export interface Environment {
   [name: string]: string | undefined;
 }
 
-// tslint:disable max-classes-per-file
 export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
