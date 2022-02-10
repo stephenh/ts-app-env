@@ -1,3 +1,6 @@
+type LogFn = (msg: string) => void;
+type Logger = { debug?: LogFn; info: LogFn; warn: LogFn; error: LogFn };
+
 /**
  * Creates a new config object, described by the {@code ConfigSpec} instance,
  * after populating/validating it against the {@code env} environment.
@@ -21,6 +24,13 @@ export interface ConfigOptions {
 
   /** The NODE_ENV e.g. production or development; used for properties that use `notNeededIn`. */
   nodeEnv?: string;
+
+  /**
+   * Pass a custom logger (e.g., a Pino instance).
+   *
+   * @default - console
+   */
+  logger?: Logger;
 }
 
 export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions = {}): S {
@@ -50,18 +60,26 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
 }
 
 function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors: boolean) {
-  if (errors.length > 0) {
-    const message = errors.map((e) => e.message).join(", ");
-    if (!ignoreErrors) {
-      throw new ConfigError(message);
-    } else {
-      if (options.doNotLogErrors !== true) {
-        // In theory should use some configurable log library but typically that would
-        // require booting up the very environment/config variables we're trying to resolve.
-        console.log(`Ignoring errors while instantiating config: ${message}`);
-      }
-    }
+  if (errors.length === 0) {
+    return;
   }
+
+  const { logger = console } = options;
+  const message = errors.map((e) => e.message).join(", ");
+  if (!ignoreErrors) {
+    log(logger.error, message, options);
+    throw new ConfigError(message);
+  } else {
+    log(logger.info, `Ignoring errors while instantiating config: ${message}`, options);
+  }
+}
+
+function log(fn: LogFn, message: string, { doNotLogErrors }: ConfigOptions) {
+  if (doNotLogErrors === true) {
+    return;
+  }
+
+  fn(message);
 }
 
 /**
