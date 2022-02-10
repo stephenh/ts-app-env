@@ -67,14 +67,14 @@ function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors
   const { logger = console } = options;
   const message = errors.map((e) => e.message).join(", ");
   if (!ignoreErrors) {
-    log(logger.error, message, options);
+    maybeLog(logger.error, message, options);
     throw new ConfigError(message);
   } else {
-    log(logger.info, `Ignoring errors while instantiating config: ${message}`, options);
+    maybeLog(logger.info, `Ignoring errors while instantiating config: ${message}`, options);
   }
 }
 
-function log(fn: LogFn, message: string, { doNotLogErrors }: ConfigOptions) {
+function maybeLog(fn: LogFn, message: string, { doNotLogErrors }: ConfigOptions) {
   if (doNotLogErrors === true) {
     return;
   }
