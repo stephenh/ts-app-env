@@ -14,3 +14,7 @@ build/docs
 coverage
 .nyc_output
 *.log
+jest.config.js
+.prettierrc
+release.config.js
+CODEOWNERS
