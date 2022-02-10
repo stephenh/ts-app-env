@@ -44,21 +44,21 @@ describe("AppEnv", () => {
   });
 
   it("can be constructed with missing env vars if skip is set", () => {
-    const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
+    const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
     const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
-    const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true });
+    const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, logger });
     expect(conf.name).toBeUndefined();
-    expect(log).toHaveBeenCalledWith("Ignoring errors while instantiating config: NAME is not set");
+    expect(logger.info).toHaveBeenCalledWith("Ignoring errors while instantiating config: NAME is not set");
   });
 
   it("can be constructed with missing env vars and also not complain about it", () => {
-    const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
+    const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
     const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
-    const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, doNotLogErrors: true });
+    const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, doNotLogErrors: true, logger });
     expect(conf.name).toBeUndefined();
-    expect(log).toHaveBeenCalledTimes(0);
+    expect(logger.error).toHaveBeenCalledTimes(0);
   });
 
   it("error message contains the name of all missing env vars", () => {
