@@ -64,22 +64,35 @@ function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors
     return;
   }
 
-  const { logger = console } = options;
   const message = errors.map((e) => e.message).join(", ");
   if (!ignoreErrors) {
-    maybeLog(logger.error, message, options);
+    maybeLog("error", message, options);
     throw new ConfigError(message);
   } else {
-    maybeLog(logger.info, `Ignoring errors while instantiating config: ${message}`, options);
+    maybeLog("info", `Ignoring errors while instantiating config: ${message}`, options);
   }
 }
 
-function maybeLog(fn: LogFn, message: string, { doNotLogErrors }: ConfigOptions) {
+function maybeLog(level: keyof Logger, message: string, options: ConfigOptions) {
+  const { doNotLogErrors, logger = console } = options;
   if (doNotLogErrors === true) {
     return;
   }
 
-  fn(message);
+  switch (level) {
+    case "error":
+      logger.error(message);
+      break;
+    case "warn":
+      logger.warn(message);
+      break;
+    case "info":
+      logger.info(message);
+      break;
+    case "debug":
+      logger.debug ? logger.debug(message) : undefined;
+      break;
+  }
 }
 
 /**
