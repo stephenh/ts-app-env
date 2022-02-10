@@ -33,9 +33,9 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
       const v = (spec as Record<string, unknown>)[k];
       if (v instanceof ConfigOption) {
         config[k] = v.getValue(k, env, options);
-      } else if (typeof v === "object" && v !== null) {
+      } else if (typeof v === "object") {
         // assume this is a nested config spec
-        config[k] = newConfig(v as Record<string, unknown>, env, options);
+        config[k] = newConfig(v, env, options);
       }
     } catch (e) {
       if (e instanceof Error) {
