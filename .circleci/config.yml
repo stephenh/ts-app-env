@@ -24,6 +24,7 @@ workflows:
           name: Release
           requires: ["Validate Build", "Lint", "Run Tests"]
           npm-run: release
+          context: npm
           filters:
             branches:
               only: main
