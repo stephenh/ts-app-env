@@ -1,4 +1,5 @@
 import { boolean, ConfigError, newConfig, number, string } from "../";
+import pino from "pino";
 
 const AppConfig = {
   enabled: boolean(),
@@ -44,7 +45,7 @@ describe("AppEnv", () => {
   });
 
   it("can be constructed with missing env vars if skip is set", () => {
-    const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    const logger = createMockLogger();
     const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, logger });
@@ -53,12 +54,32 @@ describe("AppEnv", () => {
   });
 
   it("can be constructed with missing env vars and also not complain about it", () => {
-    const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    const logger = createMockLogger();
     const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, doNotLogErrors: true, logger });
     expect(conf.name).toBeUndefined();
     expect(logger.error).toHaveBeenCalledTimes(0);
+  });
+
+  it("logs an error if an env var is missing", () => {
+    const logger = createMockLogger();
+    const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
+    delete invalidEnvVars.NAME;
+    delete invalidEnvVars.PORT;
+    expect(() => newConfig(AppConfig, invalidEnvVars, { logger })).toThrow();
+    expect(logger.error).toHaveBeenCalledWith("NAME is not set, PORT is not set");
+  });
+
+  it("can log errors with a custom pino logger", () => {
+    const pinoLogger = pino();
+    const pinoErrorSpy = jest.spyOn(pinoLogger, "error");
+
+    const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
+    delete invalidEnvVars.NAME;
+    delete invalidEnvVars.PORT;
+    expect(() => newConfig(AppConfig, invalidEnvVars, { logger: pinoLogger })).toThrow();
+    expect(pinoErrorSpy).toHaveBeenCalledWith("NAME is not set, PORT is not set");
   });
 
   it("error message contains the name of all missing env vars", () => {
@@ -141,3 +162,7 @@ describe("AppEnv", () => {
     );
   });
 });
+
+function createMockLogger() {
+  return { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+}
