@@ -2,7 +2,9 @@ src
 test
 tsconfig.json
 tsconfig.module.json
-tslint.json
+.nvmrc
+.eslint*
+.circleci
 .travis.yml
 .github
 .prettierignore

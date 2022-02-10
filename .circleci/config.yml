@@ -1,0 +1,20 @@
+version: 2.1
+orbs:
+  node: circleci/node@5.0.0
+workflows:
+  test:
+    jobs:
+      - node/run:
+          name: Validate Build
+          npm-run: build -- --noEmit
+      - node/run:
+          name: Lint
+          npm-run: lint
+      - node/test:
+          matrix:
+            parameters:
+              version:
+                - "12.22"
+                - "14.19"
+                - "16.13"
+                - "lts"

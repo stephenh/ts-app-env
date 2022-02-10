@@ -19,7 +19,7 @@ const AppConfig = {
 
   nameIsEnvName: string(),
 
-  SOME_URL: string()
+  SOME_URL: string(),
 };
 
 /* eslint-disable prefer-destructuring */
@@ -30,7 +30,7 @@ describe("AppEnv", () => {
     NAME: "app",
     NAME_IS_ENV_NAME: "app2",
     PORT: "8080",
-    SOME_URL: "url"
+    SOME_URL: "url",
   };
 
   it("can be constructed", () => {
@@ -45,7 +45,7 @@ describe("AppEnv", () => {
 
   it("can be constructed with missing env vars if skip is set", () => {
     const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
-    const invalidEnvVars = { ...validEnvVars };
+    const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true });
     expect(conf.name).toBeUndefined();
@@ -54,7 +54,7 @@ describe("AppEnv", () => {
 
   it("can be constructed with missing env vars and also not complain about it", () => {
     const log = jest.spyOn(global.console, "log").mockImplementation(() => undefined);
-    const invalidEnvVars = { ...validEnvVars };
+    const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     const conf = newConfig(AppConfig, invalidEnvVars, { ignoreErrors: true, doNotLogErrors: true });
     expect(conf.name).toBeUndefined();
@@ -62,14 +62,14 @@ describe("AppEnv", () => {
   });
 
   it("error message contains the name of all missing env vars", () => {
-    const invalidEnvVars = { ...validEnvVars };
+    const invalidEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnvVars.NAME;
     delete invalidEnvVars.PORT;
     expect(() => newConfig(AppConfig, invalidEnvVars)).toThrow("NAME is not set, PORT is not set");
   });
 
   it("can ignore unset values in development environments", () => {
-    const devEnvVars = { ...validEnvVars };
+    const devEnvVars: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete devEnvVars.NAME;
     const conf = newConfig(AppConfig, devEnvVars, { nodeEnv: "development" });
     expect(conf.name).toBeUndefined();

@@ -2,11 +2,11 @@ import { newConfig, number, string } from "../";
 
 // Each component has its own/different config
 const RollbarEnv = {
-  ROLLBAR_URL: string()
+  ROLLBAR_URL: string(),
 };
 
 const StatsEnv = {
-  STATSD_URL: string()
+  STATSD_URL: string(),
 };
 
 // Pretend this is a 3rd party initialization function that we can't change.
@@ -18,7 +18,7 @@ function createThirdPartyMod(settings: { somePort: number; someUrl: string }): s
 // And so we declare an "env" adapter for its config
 const SomeThirdPartyEnv = {
   somePort: number({ env: "SOME_PORT" }),
-  someUrl: string()
+  someUrl: string(),
 };
 
 const AppEnv = {
@@ -26,7 +26,7 @@ const AppEnv = {
   ENVIRONMENT: string({ default: "staging" }),
   ...RollbarEnv,
   ...StatsEnv,
-  someThirdParty: SomeThirdPartyEnv
+  someThirdParty: SomeThirdPartyEnv,
 };
 
 /* eslint-disable prefer-destructuring */
@@ -37,7 +37,7 @@ describe("AppEnv", () => {
     ROLLBAR_URL: "http://rollbar",
     SOME_PORT: "100",
     SOME_URL: "thirdPartyUrl",
-    STATSD_URL: "http://statsd"
+    STATSD_URL: "http://statsd",
   };
 
   it("can be constructed", () => {
@@ -59,7 +59,7 @@ describe("AppEnv", () => {
   });
 
   it("throws a single error for composed configs", () => {
-    const invalidEnv = { ...validEnvVars };
+    const invalidEnv: Partial<typeof validEnvVars> = { ...validEnvVars };
     delete invalidEnv.APP_URL;
     delete invalidEnv.SOME_URL;
     delete invalidEnv.SOME_PORT;

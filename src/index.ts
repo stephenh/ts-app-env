@@ -27,18 +27,22 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
   const errors: Error[] = [];
   // go through our spec version of S that the type system thinks has primitives
   // but are really ConfigOptions that we've casted to the primitive
-  const config = {};
-  Object.keys(spec).forEach(k => {
+  const config: Record<string, S | unknown> = {};
+  Object.keys(spec).forEach((k) => {
     try {
-      const v = (spec as any)[k];
+      const v = (spec as Record<string, unknown>)[k];
       if (v instanceof ConfigOption) {
-        (config as any)[k] = v.getValue(k, env, options);
+        config[k] = v.getValue(k, env, options);
       } else if (typeof v === "object") {
         // assume this is a nested config spec
-        (config as any)[k] = newConfig(v, env, options);
+        config[k] = newConfig(v, env, options);
       }
     } catch (e) {
-      errors.push(e);
+      if (e instanceof Error) {
+        errors.push(e);
+      } else {
+        throw e;
+      }
     }
   });
   logOrFailIfErrors(options, errors, options.ignoreErrors || false);
@@ -47,14 +51,13 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
 
 function logOrFailIfErrors(options: ConfigOptions, errors: Error[], ignoreErrors: boolean) {
   if (errors.length > 0) {
-    const message = errors.map(e => e.message).join(", ");
+    const message = errors.map((e) => e.message).join(", ");
     if (!ignoreErrors) {
       throw new ConfigError(message);
     } else {
       if (options.doNotLogErrors !== true) {
         // In theory should use some configurable log library but typically that would
         // require booting up the very environment/config variables we're trying to resolve.
-        // tslint:disable-next-line no-console
         console.log(`Ignoring errors while instantiating config: ${message}`);
       }
     }
@@ -71,7 +74,6 @@ export interface Environment {
   [name: string]: string | undefined;
 }
 
-// tslint:disable max-classes-per-file
 export class ConfigError extends Error {}
 
 /** An individual config option, e.g. a string/int. */
@@ -98,7 +100,7 @@ export interface ConfigOptionSettings<V> {
 export function number(options: ConfigOptionSettings<number> & { optional: true }): number | undefined;
 export function number(options?: ConfigOptionSettings<number>): number;
 export function number(options: ConfigOptionSettings<number> = {}): number | undefined {
-  return option<number>(options, s => {
+  return option<number>(options, (s) => {
     const v = parseFloat(s);
     if (isNaN(v)) {
       throw new Error("is not a number");
@@ -111,19 +113,19 @@ export function number(options: ConfigOptionSettings<number> = {}): number | und
 export function string(options: ConfigOptionSettings<string> & { optional: true }): string | undefined;
 export function string(options?: ConfigOptionSettings<string>): string;
 export function string(options: ConfigOptionSettings<string> = {}): string | undefined {
-  return option<string>(options, s => s);
+  return option<string>(options, (s) => s);
 }
 
 /** Construct a config option that is a boolean, only the exact string value 'true' is treated as true, everything else is false. */
 export function boolean(options: ConfigOptionSettings<boolean> & { optional: true }): boolean | undefined;
 export function boolean(options?: ConfigOptionSettings<boolean>): boolean;
 export function boolean(options: ConfigOptionSettings<boolean> = {}): boolean | undefined {
-  return option<boolean>(options, s => s === "true");
+  return option<boolean>(options, (s) => s === "true");
 }
 
 /** Construct a generic config option. */
 export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) => V): V {
-  const opt = new class extends ConfigOption<V> {
+  const opt = new (class extends ConfigOption<V> {
     public getValue(propertyName: string, env: Environment, appOptions: ConfigOptions) {
       // use propertyName if they didn't specify an env
       const envName = options.env || snakeAndUpIfNeeded(propertyName);
@@ -132,7 +134,11 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
         try {
           return parser(envValue);
         } catch (e) {
-          throw new ConfigError(`${envName} ${e.message}`);
+          if (e instanceof Error) {
+            throw new ConfigError(`${envName} ${e.message}`);
+          } else {
+            throw e;
+          }
         }
       }
       if (options.default !== undefined) {
@@ -148,20 +154,21 @@ export function option<V>(options: ConfigOptionSettings<V>, parser: (s: string) 
       }
       throw new ConfigError(`${envName} is not set`);
     }
-  }();
+  })();
   // This is the cute "lie through our teeth to the type system" hack where
   // we pretend our ConfigOption<V> objects are Vs so that we can instaniate
   // the initial "spec" version of the app's config class, which we'll then
   // use to iterate over the ConfigOption<V>'s and resolve them to V's on
   // the real config instance.
-  return (opt as any) as V;
+
+  return opt as unknown as V;
 }
 
 function snakeAndUpIfNeeded(propertyName: string): string {
   if (propertyName.includes("_") || propertyName.match(/^[A-Z]+$/)) {
     return propertyName; // assume it's already FOO_BAR
   } else {
-    return propertyName.replace(/([A-Z])/g, l => "_" + l).toUpperCase();
+    return propertyName.replace(/([A-Z])/g, (l) => "_" + l).toUpperCase();
   }
 }
 
