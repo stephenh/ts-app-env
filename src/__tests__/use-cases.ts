@@ -21,12 +21,19 @@ const SomeThirdPartyEnv = {
   someUrl: string(),
 };
 
+const somePrimitivesObject = {
+  foo: true,
+  bar: "bar",
+  baz: 1,
+};
+
 const AppEnv = {
   APP_URL: string(),
   ENVIRONMENT: string({ default: "staging" }),
   ...RollbarEnv,
   ...StatsEnv,
   someThirdParty: SomeThirdPartyEnv,
+  somePrimitives: somePrimitivesObject,
 };
 
 /* eslint-disable prefer-destructuring */
@@ -66,5 +73,10 @@ describe("AppEnv", () => {
     expect(() => newConfig(AppEnv, invalidEnv)).toThrow(
       "APP_URL is not set, SOME_PORT is not set, SOME_URL is not set"
     );
+  });
+
+  it("can pass primitive values as-is", () => {
+    const c = newConfig(AppEnv, validEnvVars);
+    expect(c.somePrimitives).toEqual(somePrimitivesObject);
   });
 });

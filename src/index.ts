@@ -43,6 +43,9 @@ export function newConfig<S>(spec: S, env: Environment, options: ConfigOptions =
       const v = (spec as Record<string, unknown>)[k];
       if (v instanceof ConfigOption) {
         config[k] = v.getValue(k, env, options);
+      } else if (["string", "number", "boolean", "symbol", "bigint"].includes(typeof v)) {
+        // Add primitive types as-is
+        config[k] = v;
       } else if (typeof v === "object") {
         // assume this is a nested config spec
         config[k] = newConfig(v, env, options);
